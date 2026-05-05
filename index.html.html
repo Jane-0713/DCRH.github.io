@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支出證明單</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #222;
+            letter-spacing: 3px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #888;
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 5px;
+        }
+
+        .form-group label .required {
+            color: red;
+            margin-left: 2px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+            color: #333;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #4a90d9;
+            box-shadow: 0 0 0 2px rgba(74,144,217,0.15);
+        }
+
+        .form-group .hint {
+            font-size: 11px;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        /* 費用類別區塊 */
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 10px;
+        }
+
+        .section-title .required {
+            color: red;
+            margin-left: 2px;
+        }
+
+        .amount-input-wrapper {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .amount-input-wrapper span {
+            padding: 8px 10px;
+            background: #f5f5f5;
+            border-right: 1px solid #ccc;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .amount-input-wrapper input {
+            border: none;
+            padding: 8px 10px;
+            font-size: 14px;
+            flex: 1;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .add-btn {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .btn-add {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 5px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background-color: #4cae4c;
+        }
+
+        .hint-text {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        /* 已新增費用項目表格 */
+        .table-section {
+            background: #f8f9fb;
+            border: 1px solid #dde3ea;
+            border-radius: 8px;
+            padding: 0;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .table-header-bar {
+            background: #4a6fa5;
+            color: white;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-header-bar::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background: #7ec8e3;
+            border-radius: 2px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table thead {
+            background: #eef1f6;
+        }
+
+        table th {
+            padding: 10px 12px;
+            text-align: left;
+            color: #555;
+            font-weight: bold;
+            border-bottom: 1px solid #dde3ea;
+        }
+
+        table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            color: #444;
+        }
+
+        table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-total {
+            background: #f0f2f5;
+            font-weight: bold;
+        }
+
+        /* 合計金額 */
+        .total-section {
+            margin-top: 15px;
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            border-radius: 6px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #7a5c00;
+        }
+
+        .total-section .warning-icon {
+            font-size: 16px;
+        }
+
+        .total-section .total-amount {
+            color: #e00;
+            font-weight: bold;
+            font-size: 15px;
+            margin-left: auto;
+        }
+
+        /* 操作按鈕 */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            opacity: 0.88;
+            transform: translateY(-1px);
+        }
+
+        .btn-clear {
+            background-color: #e05252;
+            color: white;
+        }
+
+        .btn-reset {
+            background-color: #555;
+            color: white;
+        }
+
+        .btn-print {
+            background-color: #4a90d9;
+            color: white;
+        }
+
+        /* 刪除按鈕 */
+        .btn-delete {
+            background: #e05252;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+
+        /* 提交後顯示區 */
+        .submit-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .submit-info span {
+            color: #4a90d9;
+            font-weight: bold;
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 15px; }
+            .action-buttons { display: none; }
+            .btn-add { display: none; }
+            .btn-delete { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 標題 -->
+    <div class="header">
+        <h1>支出證明單</h1>
+        <p>Expenditure Voucher</p>
+    </div>
+
+    <!-- 公司名稱 & 憑證編號 -->
+    <div class="form-row">
+        <div class="form-group">
+            <label>公司名稱<span class="required">*</span></label>
+            <input type="text" id="companyName" placeholder="請輸入公司名稱" />
+        </div>
+        <div class="form-group">
+            <label>憑證編號</label>
+            <input type="text" id="voucherNo" placeholder="EV-自動產生" readonly
+                style="background:#f5f5f5; color:#888;" />
+        </div>
+    </div>
+
+    <!-- 支出日期 -->
+    <div class="form-row">
+        <div class="form-group">
+            <label>支出日期<span class="required">*</span>（格式 yyy/mm/dd）</label>
+            <input type="text" id="expenseDate" placeholder="yyy/mm/dd（例：114/10/08）" maxlength="10" />
+            <span class="hint">格式：yyy/mm/dd，例 114/10/08</span>
+        </div>
+    </div>
+
+    <!-- 憑證摘要 -->
+    <div class="form-group" style="margin-bottom:15px;">
+        <label>憑證摘要<span class="required">*</span></label>
+        <textarea id="summary" maxlength="100" placeholder="請輸入摘要說明..."
+            oninput="updateCharCount()"></textarea>
+        <div class="char-count"><span id="charCount">0</span> / 100 字</div>
+    </div>
+
+    <!-- 費用類別 & 金額 -->
+    <div style="margin-bottom:8px;">
+        <div class="section-title">費用類別 &amp; 金額<span class="required">*</span></div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>費用類別</label>
+                <select id="expenseCategory">
+                    <option value="">-- 請選擇 --</option>
+                    <option value="文具用品">文具用品</option>
+                    <option value="運費">運費</option>
+                    <option value="郵電費">郵電費</option>
+                    <option value="修繕費">修繕費</option>
+                    <option value="旅資">旅資</option>
+                    <option value="廣告費">廣告費</option>
+                    <option value="水電瓦斯費">水電瓦斯費</option>
+                    <option value="其他費用">其他費用</option>
+                    <option value="雜項購置">雜項購置</option>
+                    <option value="交通費">交通費</option>
+                    <option value="燃料費">燃料費</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>金額（NT$）</label>
+                <div class="amount-input-wrapper">
+                    <span>$</span>
+                    <input type="number" id="amount" placeholder="請輸入金額" min="0" />
+                </div>
+            </div>
+        </div>
+
+        <p class="hint-text">請選擇費用類別與金額後點擊「新增項目」。</p>
+
+        <div class="add-btn">
+            <button class="btn-add" onclick="addItem()">＋ 新增項目</button>
+        </div>
+    </div>
+
+    <!-- 已新增費用項目 -->
+    <div class="table-section">
+        <div class="table-header-bar">已新增費用項目</div>
+        <table id="itemTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>費用類別</th>
+                    <th>憑證摘要</th>
+                    <th>金額</th>
+                    <th>新增時間</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="itemTableBody">
+                <!-- 動態新增 -->
+            </tbody>
+            <tfoot>
+                <tr class="table-total">
+                    <td colspan="3" style="text-align:right;">合計 NT$</td>
+                    <td id="totalAmount">0</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- 總計金額（大寫） -->
+    <div class="total-section">
+        <span class="warning-icon">⚠️</span>
+        <span>總計金額（大寫）：</span>
+        <span class="total-amount" id="totalChinese">零元整</span>
+    </div>
+
+    <!-- 操作按鈕 -->
+    <div class="action-buttons">
+        <button class="btn btn-clear" onclick="clearAll()">🗑 清除所有明細</button>
+        <button class="btn btn-reset" onclick="resetForm()">↺ 重置填寫表單</button>
+        <button class="btn btn-print" onclick="window.print()">🖨 列印</button>
+    </div>
+</div>
+
+<script>
+    // 自動產生憑證編號
+    function generateVoucherNo() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const rand = Math.floor(Math.random() * 9000) + 1000;
+        return `EV-${y}${m}${d}-${rand}`;
+    }
+    document.getElementById('voucherNo').value = generateVoucherNo();
+
+    // 字數統計
+    function updateCharCount() {
+        const val = document.getElementById('summary').value;
+        document.getElementById('charCount').textContent = val.length;
+    }
+
+    // 項目列表
+    let items = [];
+    let itemCounter = 0;
+
+    // 新增項目
+    function addItem() {
+        const category = document.getElementById('expenseCategory').value;
+        const amount = parseFloat(document.getElementById('amount').value);
+        const summary = document.getElementById('summary').value.trim();
+
+        if (!category) {
+            alert('請選擇費用類別！');
+            return;
+        }
+        if (isNaN(amount) || amount <= 0) {
+            alert('請輸入有效的金額！');
+            return;
+        }
+
+        itemCounter++;
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+        items.push({
+            id: itemCounter,
+            category,
+            summary: summary || '（無）',
+            amount,
+            time: timeStr
+        });
+
+        renderTable();
+
+        // 清空費用類別與金額
+        document.getElementById('expenseCategory').value = '';
+        document.getElementById('amount').value = '';
+    }
+
+    // 刪除項目
+    function deleteItem(id) {
+        items = items.filter(i => i.id !== id);
+        renderTable();
+    }
+
+    // 渲染表格
+    function renderTable() {
+        const tbody = document.getElementById('itemTableBody');
+        tbody.innerHTML = '';
+        let total = 0;
+
+        items.forEach((item, index) => {
+            total += item.amount;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${item.category}</td>
+                <td>${item.summary}</td>
+                <td>NT$ ${item.amount.toLocaleString()}</td>
+                <td>${item.time}</td>
+                <td><button class="btn-delete" onclick="deleteItem(${item.id})">刪除</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('totalAmount').textContent = total.toLocaleString();
+        document.getElementById('totalChinese').textContent = numberToChinese(total) + '元整';
+    }
+
+    // 數字轉中文大寫
+    function numberToChinese(num) {
+        if (num === 0) return '零';
+        const units = ['', '十', '百', '千', '萬', '十萬', '百萬', '千萬', '億'];
+        const digits = ['零', '壹', '貳', '參', '肆', '伍', '陸', '柒', '捌', '玖'];
+        let result = '';
+        const str = Math.floor(num).toString();
+        const len = str.length;
+        for (let i = 0; i < len; i++) {
+            const d = parseInt(str[i]);
+            const u = units[len - 1 - i];
+            if (d !== 0) {
+                result += digits[d] + u;
+            } else {
+                if (result && result[result.length - 1] !== '零') {
+                    result += '零';
+                }
+            }
+        }
+        result = result.replace(/零+$/, '');
+        return result || '零';
+    }
+
+    // 清除所有明細
+    function clearAll() {
+        if (confirm('確定要清除所有費用項目嗎？')) {
+            items = [];
+            itemCounter = 0;
+            renderTable();
+        }
+    }
+
+    // 重置表單
+    function resetForm() {
+        if (confirm('確定要重置整個表單嗎？')) {
+            document.getElementById('companyName').value = '';
+            document.getElementById('voucherNo').value = generateVoucherNo();
+            document.getElementById('expenseDate').value = '';
+            document.getElementById('summary').value = '';
+            document.getElementById('expenseCategory').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('charCount').textContent = '0';
+            items = [];
+            itemCounter = 0;
+            renderTable();
+        }
+    }
+</script>
+
+</body>
+</html>
